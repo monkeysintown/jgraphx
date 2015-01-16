@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.github.monkeysintown</groupId>
+    <artifactId>jgraphx</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <packaging>pom</packaging>
+    <name>Monkeys in Town [TODO]</name>
+    <description>[TODO]</description>
+    <url>https://monkeysintown.github.io/jgraphx</url>
+
+    <licenses>
+        <license>
+            <name>Apache 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <organization>
+        <name>Monkeys in Town Lda.</name>
+        <url>https://github.com/monkeysintown</url>
+    </organization>
+
+    <scm>
+        <connection>scm:git:https://github.com/monkeysintown/jgraphx.git</connection>
+        <developerConnection>scm:git:https://github.com/monkeysintown/jgraphx.git</developerConnection>
+        <url>scm:git:https://github.com/monkeysintown/jgraphx.git</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>vidakovic</id>
+            <name>Aleksandar Vidakovic</name>
+            <url>https://github.com/vidakovic</url>
+            <organization>Monkeys in Town Lda.</organization>
+            <organizationUrl>https://github.com/monkeysintown</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>0</timezone>
+        </developer>
+    </developers>
+
+    <prerequisites>
+        <maven>3.2.3</maven>
+    </prerequisites>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <github.global.server>github</github.global.server>
+    </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>bintray</id>
+            <url>https://api.bintray.com/maven/cheetah/monkeysintown/jgraphx</url>
+        </repository>
+    </distributionManagement>
+
+    <build>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/script</directory>
+            </resource>
+        </resources>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.3.2</version>
+                    <executions>
+                        <execution>
+                            <id>deploy</id>
+                            <phase>install</phase>
+                            <goals>
+                                <goal>exec</goal>
+                            </goals>
+                            <configuration>
+                                <executable>${project.basedir}/src/main/script/deploy.sh</executable>
+                                <arguments>
+                                    <argument>${bintray.username}</argument>
+                                    <argument>${bintray.password}</argument>
+                                    <argument>monkeysintown</argument>
+                                    <argument>${project.artifactId}</argument>
+                                    <argument>${project.groupId}</argument>
+                                </arguments>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <workingDirectory>${project.basedir}</workingDirectory>
+                        <successCodes>
+                            <successCode>0</successCode>
+                        </successCodes>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>1.9.1</version>
+                    <executions>
+                        <execution>
+                            <id>add-source</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>add-source</goal>
+                            </goals>
+                            <configuration>
+                                <sources>
+                                    <source>${project.build.directory}/generated-sources/antlr4</source>
+                                </sources>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.8.2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>external.atlassian.jgitflow</groupId>
+                    <artifactId>jgitflow-maven-plugin</artifactId>
+                    <version>1.0-m4.3</version>
+                    <configuration>
+                        <username>${github.username}</username>
+                        <password>${github.password}</password>
+                        <allowSnapshots>true</allowSnapshots>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                        <pushReleases>true</pushReleases>
+                        <noDeploy>false</noDeploy>
+                        <noReleaseBuild>false</noReleaseBuild>
+                        <noFeatureBuild>false</noFeatureBuild>
+                        <noHotfixBuild>false</noHotfixBuild>
+                        <useReleaseProfile>true</useReleaseProfile>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>external.atlassian.jgitflow</groupId>
+                <artifactId>jgitflow-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>release-profile</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>

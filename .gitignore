@@ -1,0 +1,17 @@
+### Maven
+target
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.config
+### IntelliJ
+.idea
+*.iml
+*.ipr
+*.iws
+atlassian-ide-plugin.xml
+### Other
+build.sh
+release.sh
+*.log
