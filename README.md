@@ -1,8 +1,8 @@
 # JGraphX Redistribution
 
-Maven Central: ![Maven Central](https://img.shields.io/maven-central/v/com.github.monkeysintown/jgraphx.svg)
+![Maven Central](https://img.shields.io/maven-central/v/com.github.monkeysintown/jgraphx.svg)
 
-Bintray: [ ![Download](https://api.bintray.com/packages/cheetah/monkeysintown/jgraphx/images/download.svg) ](https://bintray.com/cheetah/monkeysintown/jgraphx/_latestVersion)
+[ ![Download](https://api.bintray.com/packages/cheetah/monkeysintown/jgraphx/images/download.svg) ](https://bintray.com/cheetah/monkeysintown/jgraphx/_latestVersion)
          
 JGraphX Swing Component - Java Graph Visualization Library
 
