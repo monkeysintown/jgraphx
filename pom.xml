@@ -158,20 +158,4 @@
         </plugins>
     </build>
 
-    <profiles>
-        <profile>
-            <id>release-profile</id>
-            <activation>
-                <property>
-                    <name>performRelease</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-
 </project>
