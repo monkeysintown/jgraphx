@@ -1,4 +1,5 @@
 #!/bin/bash
+BINTRAY=https://bintray.com
 API=https://api.bintray.com
 PACKAGE_DESCRIPTOR=bintray-package.json
 BINTRAY_USERNAME=$1
@@ -6,7 +7,7 @@ BINTRAY_PASSWORD=$2
 BINTRAY_REPO=$3
 PACKAGE=$4
 GROUP=$(echo "$5" | sed -r 's/\./\//g')
-CURL="curl -u${BINTRAY_USERNAME}:${BINTRAY_PASSWORD} -H Content-Type:application/json -H Accept:application/json"
+CURL="curl --silent --output /dev/null -u${BINTRAY_USERNAME}:${BINTRAY_PASSWORD} -H Content-Type:application/json -H Accept:application/json"
 RELEASES_COUNT=-1
 RELEASES_START=3
 RELEASES_END=4
@@ -15,11 +16,19 @@ log () {
     echo -e "\e[94mINFO  \e[0m$1"
 }
 
+log_warn () {
+    echo -e "\e[33mWARN  \e[0m$1"
+}
+
+log_error () {
+    echo -e "\e[31mERROR \e[0m$1"
+}
+
 checkfile () {
     VERSION=$1
     NAME=$2
 
-    RESPONSE=$(${CURL} --write-out %{http_code} --silent --output /dev/null https://bintray.com/artifact/download/cheetah/monkeysintown/com/github/monkeysintown/jgraphx/$VERSION/$NAME)
+    RESPONSE=$(${CURL} --write-out %{http_code} ${BINTRAY}/artifact/download/cheetah/monkeysintown/com/github/monkeysintown/jgraphx/${VERSION}/${NAME})
 
     if [ $RESPONSE == "200" ] || [ $RESPONSE == "201" ] || [ $RESPONSE == "302" ]; then
         echo "1"
@@ -121,11 +130,11 @@ sign () {
     return
 }
 
-function upload() {
+upload() {
     VERSION=$1
     NAME=$2
     FILE="target/$VERSION/lib/$NAME"
-    uploaded=$(${CURL} --write-out %{http_code} --silent --output /dev/null -T ${FILE} -H X-Bintray-Package:${PACKAGE} -H X-Bintray-Version:${VERSION} ${API}/content/${BINTRAY_USERNAME}/${BINTRAY_REPO}/${GROUP}/${PACKAGE}/${VERSION}/${NAME})
+    uploaded=$(${CURL} --write-out %{http_code} -T ${FILE} -H X-Bintray-Package:${PACKAGE} -H X-Bintray-Version:${VERSION} ${API}/content/${BINTRAY_USERNAME}/${BINTRAY_REPO}/${GROUP}/${PACKAGE}/${VERSION}/${NAME})
     log "File ${FILE} uploaded."
     return ${uploaded}
 }
@@ -178,7 +187,7 @@ main () {
     for v in ${JGRAPHX_VERSIONS[@]}; do
 
         if [ "$(checkfile ${v} jgraphx-${v}.pom)" == 1 ]; then
-            log "Version ${v} already uploaded."
+            log_warn "Version ${v} already uploaded."
         else
             if [ ! -d target/${v} ];
             then
