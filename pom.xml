@@ -7,8 +7,8 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <packaging>pom</packaging>
-    <name>Monkeys in Town [TODO]</name>
-    <description>[TODO]</description>
+    <name>Monkeys in Town JGraphX</name>
+    <description>Monkeys in Town JGraphX Redistribution</description>
     <url>https://monkeysintown.github.io/jgraphx</url>
 
     <licenses>
@@ -53,13 +53,6 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <github.global.server>github</github.global.server>
     </properties>
-
-    <distributionManagement>
-        <repository>
-            <id>bintray</id>
-            <url>https://api.bintray.com/maven/cheetah/monkeysintown/jgraphx</url>
-        </repository>
-    </distributionManagement>
 
     <build>
 
@@ -142,7 +135,7 @@
                         <allowSnapshots>true</allowSnapshots>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                         <pushReleases>true</pushReleases>
-                        <noDeploy>false</noDeploy>
+                        <noDeploy>true</noDeploy>
                         <noReleaseBuild>false</noReleaseBuild>
                         <noFeatureBuild>false</noFeatureBuild>
                         <noHotfixBuild>false</noHotfixBuild>

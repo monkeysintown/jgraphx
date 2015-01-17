@@ -7,33 +7,78 @@ BINTRAY_REPO=$3
 PACKAGE=$4
 GROUP=$(echo "$5" | sed -r 's/\./\//g')
 CURL="curl -u${BINTRAY_USERNAME}:${BINTRAY_PASSWORD} -H Content-Type:application/json -H Accept:application/json"
-RELEASES_COUNT=-10
+RELEASES_COUNT=-1
 RELEASES_START=3
 RELEASES_END=4
 
+log () {
+    echo -e "\e[94mINFO  \e[0m$1"
+}
+
+checkfile () {
+    VERSION=$1
+    NAME=$2
+
+    RESPONSE=$(${CURL} --write-out %{http_code} --silent --output /dev/null https://bintray.com/artifact/download/cheetah/monkeysintown/com/github/monkeysintown/jgraphx/$VERSION/$NAME)
+
+    if [ $RESPONSE == "200" ] || [ $RESPONSE == "201" ] || [ $RESPONSE == "302" ]; then
+        echo "1"
+    else
+        echo "0"
+    fi
+}
+
 download () {
     VERSION=$1
-    wget -t 30 -w 5 --waitretry 20 --random-wait -O - https://github.com/jgraph/jgraphx/archive/v${VERSION}.tar.gz | tar -C ./target/${f} --strip-components=1 -zx
-    mv target/${VERSION}/lib/jgraphx.jar target/${VERSION}/lib/jgraphx-${VERSION}.jar
+
+    if [ -f target/${VERSION}/lib/jgraphx-$VERSION.jar ];
+    then
+        log "Version $VERSION already downloaded from Github."
+    else
+        wget --quiet -t 30 -w 5 --waitretry 20 --random-wait -O - https://github.com/jgraph/jgraphx/archive/v${VERSION}.tar.gz | tar -C ./target/${VERSION} --strip-components=1 -zx
+        mv target/${VERSION}/lib/jgraphx.jar target/${VERSION}/lib/jgraphx-${VERSION}.jar
+    fi
+
     return
 }
 
 pom () {
     VERSION=$1
-    cp src/main/resources/pom.xml target/${VERSION}/lib/jgraphx-$VERSION.pom
-    sed -i "s/@@VERSION@@/$VERSION/g" target/${VERSION}/lib/jgraphx-$VERSION.pom
+
+    if [ -f target/${VERSION}/lib/jgraphx-$VERSION.pom ];
+    then
+        log "jgraphx-$VERSION.pom exists."
+    else
+        cp src/main/resources/pom.xml target/${VERSION}/lib/jgraphx-$VERSION.pom
+        sed -i "s/@@VERSION@@/$VERSION/g" target/${VERSION}/lib/jgraphx-$VERSION.pom
+    fi
+
     return
 }
 
 sources () {
     VERSION=$1
-    jar cvf target/${VERSION}/lib/jgraphx-${VERSION}-sources.jar -C target/${VERSION}/src/ .
+
+    if [ -f target/${VERSION}/lib/jgraphx-${VERSION}-sources.jar ];
+    then
+        log "jgraphx-${VERSION}-sources.jar exists."
+    else
+        jar cvf target/${VERSION}/lib/jgraphx-${VERSION}-sources.jar -C target/${VERSION}/src/ .
+    fi
+
     return
 }
 
 javadoc () {
     VERSION=$1
-    jar cvf target/${VERSION}/lib/jgraphx-${VERSION}-javadoc.jar -C target/${VERSION}/docs/api/ .
+
+    if [ -f target/${VERSION}/lib/jgraphx-${VERSION}-javadoc.jar ];
+    then
+        log "jgraphx-${VERSION}-javadoc.jar exists."
+    else
+        jar cvf target/${VERSION}/lib/jgraphx-${VERSION}-javadoc.jar -C target/${VERSION}/docs/api/ .
+    fi
+
     return
 }
 
@@ -43,20 +88,45 @@ sign () {
     JAR="target/$VERSION/lib/jgraphx-$VERSION.jar"
     JAVADOC="target/$VERSION/lib/jgraphx-$VERSION-javadoc.jar"
     SOURCES="target/$VERSION/lib/jgraphx-$VERSION-sources.jar"
-    gpg2 -ab $POM
-    gpg2 -ab $JAR
-    gpg2 -ab $SOURCES
-    gpg2 -ab $JAVADOC
-    echo "Signed all files of $VERSION"
+
+    if [ -f "$POM.asc" ];
+    then
+        log "$POM already signed."
+    else
+        gpg2 -ab $POM
+        log "Signed $POM."
+    fi
+    if [ -f "$JAR.asc" ];
+    then
+        log "$JAR already signed."
+    else
+        gpg2 -ab $JAR
+        log "Signed $JAR."
+    fi
+    if [ -f "$SOURCES.asc" ];
+    then
+        log "$SOURCES already signed."
+    else
+        gpg2 -ab $SOURCES
+        log "Signed $SOURCES."
+    fi
+    if [ -f "$JAVADOC.asc" ];
+    then
+        log "$JAVADOC already signed."
+    else
+        gpg2 -ab $JAVADOC
+        log "Signed $JAVADOC."
+    fi
+
     return
 }
 
 function upload() {
-    NAME=$1
-    VERSION=$2
+    VERSION=$1
+    NAME=$2
     FILE="target/$VERSION/lib/$NAME"
     uploaded=$(${CURL} --write-out %{http_code} --silent --output /dev/null -T ${FILE} -H X-Bintray-Package:${PACKAGE} -H X-Bintray-Version:${VERSION} ${API}/content/${BINTRAY_USERNAME}/${BINTRAY_REPO}/${GROUP}/${PACKAGE}/${VERSION}/${NAME})
-    echo "File ${FILE} uploaded? y:1/N:0 ${uploaded}"
+    log "File ${FILE} uploaded."
     return ${uploaded}
 }
 
@@ -66,39 +136,63 @@ deploy () {
     JAR="jgraphx-$VERSION.jar"
     SOURCES="jgraphx-$VERSION-sources.jar"
     JAVADOC="jgraphx-$VERSION-javadoc.jar"
-    upload $POM $VERSION
-    upload ${POM}.asc $VERSION
-    echo "$POM deployd."
-    upload $JAR $VERSION
-    upload ${JAR}.asc $VERSION
-    echo "$JAR deployd."
-    upload $SOURCES $VERSION
-    upload ${SOURCES}.asc $VERSION
-    echo "$SOURCES deployed."
-    upload $JAVADOC $VERSION
-    upload ${JAVADOC}.asc $VERSION
-    echo "$JAVADOC deployed."
+
+    if [ "$(checkfile $VERSION $POM)" == 1 ]; then
+        log "$POM already deployd."
+    else
+        upload $VERSION $POM
+        upload $VERSION ${POM}.asc $VERSION
+        log "$POM deployd."
+    fi
+    if [ "$(checkfile $VERSION $JAR)" == 1 ]; then
+        log "$JAR already deployd."
+    else
+        upload $VERSION $JAR $VERSION
+        upload $VERSION ${JAR}.asc $VERSION
+        log "$JAR deployd."
+    fi
+    if [ "$(checkfile $VERSION $SOURCES)" == 1 ]; then
+        log "$SOURCES already deployed."
+    else
+        upload $VERSION $SOURCES $VERSION
+        upload $VERSION ${SOURCES}.asc $VERSION
+        log "$SOURCES deployed."
+    fi
+    if [ "$(checkfile $VERSION $JAVADOC)" == 1 ]; then
+        log "$JAVADOC already deployed."
+    else
+        upload $VERSION $JAVADOC $VERSION
+        upload $VERSION ${JAVADOC}.asc $VERSION
+        log "$JAVADOC deployed."
+    fi
+
     return
 }
 
 main () {
-    JGRAPHX_FILES=$(wget -O- https://github.com/jgraph/jgraphx/releases | egrep -o '/jgraph/jgraphx/archive/v[0-9\-\.]+.tar.gz' | sed -rn "s/\/jgraph\/jgraphx\/archive\/v([0-9\-\.]+).tar.gz/\\1/p" | sort -V | tail $RELEASES_COUNT)
-    #echo $JGRAPHX_FILES
-    JGRAPHX_FILES=(${JGRAPHX_FILES// / })
-    #JGRAPHX_FILES=("${JGRAPHX_FILES[@]:$RELEASES_START:$RELEASES_END}")
-    #echo $JGRAPHX_FILES
+    JGRAPHX_VERSIONS=$(wget -O- --quiet https://github.com/jgraph/jgraphx/releases | egrep -o '/jgraph/jgraphx/archive/v[0-9\-\.]+.tar.gz' | sed -rn "s/\/jgraph\/jgraphx\/archive\/v([0-9\-\.]+).tar.gz/\\1/p" | sort -V | tail $RELEASES_COUNT)
+    #echo $JGRAPHX_VERSIONS
+    JGRAPHX_VERSIONS=(${JGRAPHX_VERSIONS// / })
+    #JGRAPHX_VERSIONS=("${JGRAPHX_VERSIONS[@]:$RELEASES_START:$RELEASES_END}")
 
-    mkdir target
+    for v in ${JGRAPHX_VERSIONS[@]}; do
 
-    for f in ${JGRAPHX_FILES[@]}; do
-        mkdir -p target/${f}
+        if [ "$(checkfile ${v} jgraphx-${v}.pom)" == 1 ]; then
+            log "Version ${v} already uploaded."
+        else
+            if [ ! -d target/${v} ];
+            then
+                mkdir -p target/${v}
+                log "directory target/${v} created."
+            fi
 
-        download ${f}
-        pom ${f}
-        sources ${f}
-        javadoc ${f}
-        sign ${f}
-        deploy ${f}
+            download ${v}
+            pom ${v}
+            sources ${v}
+            javadoc ${v}
+            sign ${v}
+            deploy ${v}
+        fi
     done
 }
 
